@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizHost — Host Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --primary: #FFD000;
+      --primary-dark: #E6B800;
+      --primary-light: #FFF3B0;
+      --accent-green: #58CC02;
+      --accent-red: #FF4B4B;
+      --accent-blue: #1CB0F6;
+      --accent-purple: #CE82FF;
+      --bg: #F7F7F7;
+      --surface: #FFFFFF;
+      --surface-2: #F0F0F0;
+      --text-primary: #3C3C3C;
+      --text-secondary: #777777;
+      --border: #E5E5E5;
+      --shadow: 0 4px 0px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      font-size: clamp(14px, 3.5vw, 16px);
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* Header Bar */
+    .header {
+      background: var(--primary);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .app-name {
+      font-size: clamp(20px, 5vw, 26px);
+      font-weight: 900;
+      color: var(--text-primary);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .status-badge::before {
+      content: '●';
+      font-size: 0.7rem;
+    }
+
+    .status-badge.waiting {
+      background: var(--primary-light);
+      color: var(--text-primary);
+    }
+
+    .status-badge.active {
+      background: #D4EDDA;
+      color: #155724;
+    }
+
+    .status-badge.ended {
+      background: var(--surface-2);
+      color: var(--text-secondary);
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+      margin-bottom: 16px;
+      animation: pop-in 0.2s ease-out;
+    }
+
+    .card-header {
+      padding: 16px 24px;
+      font-weight: 800;
+      font-size: clamp(16px, 4vw, 18px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+    }
+
+    .btn:active {
+      transform: translateY(4px);
+      box-shadow: none !important;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--text-primary);
+      box-shadow: 0 4px 0 var(--primary-dark);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    .btn-success {
+      background: var(--accent-green);
+      color: white;
+      box-shadow: 0 4px 0 #3D9C02;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: #4DB802;
+    }
+
+    .btn-danger {
+      background: var(--accent-red);
+      color: white;
+      box-shadow: 0 4px 0 #CC3333;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #E04343;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text-primary);
+      border: 2px solid var(--border);
+      box-shadow: 0 4px 0 var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--surface-2);
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      min-height: 36px;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-control {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 14px 18px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+      color: var(--text-primary);
+      width: 100%;
+      transition: all 0.15s ease;
+      min-height: 56px;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    select.form-control {
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%233C3C3C' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      background-size: 16px;
+      padding-right: 44px;
+      font-weight: 700;
+    }
+
+    select.form-control:hover {
+      border-color: var(--primary-dark);
+    }
+
+    .select-wrapper {
+      position: relative;
+    }
+
+    .select-wrapper::after {
+      content: '\f078';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    /* Grid Layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 700px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Quiz Code Display */
+    .quiz-code-section {
+      text-align: center;
+    }
+
+    .quiz-code-display {
+      font-size: clamp(32px, 8vw, 48px);
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      color: var(--accent-blue);
+      padding: 16px 32px;
+      background: var(--primary-light);
+      border-radius: 16px;
+      display: inline-block;
+      margin-top: 8px;
+    }
+
+    .quiz-code-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    /* Timer */
+    .timer-display {
+      font-size: clamp(36px, 8vw, 56px);
+      font-weight: 900;
+      text-align: center;
+      padding: 16px;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .timer-display.idle {
+      background: var(--surface-2);
+      color: var(--text-secondary);
+    }
+
+    .timer-display.active {
+      background: #D4EDDA;
+      color: var(--accent-green);
+    }
+
+    .timer-display.warning {
+      background: #FFF3CD;
+      color: #856404;
+    }
+
+    .timer-display.danger {
+      background: #F8D7DA;
+      color: var(--accent-red);
+      animation: pulse-red 0.5s ease infinite;
+    }
+
+    /* Answer Stats */
+    .stats-label {
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .progress-bar-container {
+      height: 12px;
+      background: var(--surface-2);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent-green);
+      border-radius: 6px;
+      transition: width 0.3s ease;
+    }
+
+    /* Form Grid */
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 500px) {
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Control Bar */
+    .control-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .control-bar .btn {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    /* Player List */
+    .player-list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .count-badge {
+      background: var(--primary);
+      color: var(--text-primary);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .player-list {
+      list-style: none;
+    }
+
+    .player-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      animation: slide-up 0.2s ease-out;
+    }
+
+    .player-item:last-child {
+      border-bottom: none;
+    }
+
+    .player-name {
+      font-weight: 700;
+    }
+
+    .player-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .in-room-badge {
+      background: var(--accent-green);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .kick-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--accent-red);
+      background: transparent;
+      color: var(--accent-red);
+      cursor: pointer;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      font-size: 0.8rem;
+      transition: all 0.15s ease;
+    }
+
+    .kick-btn:hover {
+      background: var(--accent-red);
+      color: white;
+    }
+
+    .spectator-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--accent-blue);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+
+    /* Kick Confirmation */
+    .kick-confirm-card {
+      background: #FFF5F5;
+      border: 2px solid var(--accent-red);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      text-align: center;
+      animation: pop-in 0.2s ease-out;
+    }
+
+    .kick-confirm-text {
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .kick-confirm-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    /* Leaderboard */
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 50px 1fr 70px 50px 50px 70px;
+      gap: 8px;
+      padding: 12px 16px;
+      align-items: center;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      animation: pop-in 0.2s ease-out;
+    }
+
+    .leaderboard-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .leaderboard-row.rank-1 {
+      background: var(--primary);
+      font-weight: 800;
+    }
+
+    .leaderboard-row.rank-2 {
+      background: #E8E8E8;
+      font-weight: 700;
+    }
+
+    .leaderboard-row.rank-3 {
+      background: #F5DEB3;
+      font-weight: 700;
+    }
+
+    .leaderboard-row.other {
+      background: var(--surface-2);
+    }
+
+    .leaderboard-row.other:nth-child(even) {
+      background: var(--surface);
+    }
+
+    .leaderboard-header {
+      display: grid;
+      grid-template-columns: 50px 1fr 70px 50px 50px 70px;
+      gap: 8px;
+      padding: 8px 16px;
+      font-weight: 800;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 8px;
+    }
+
+    .rank-cell::before {
+      margin-right: 4px;
+    }
+
+    .rank-1 .rank-cell::before { 
+      content: '\f521'; 
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      margin-right: 4px;
+      color: var(--text-primary);
+    }
+    .rank-2 .rank-cell::before { content: '🥈'; }
+    .rank-3 .rank-cell::before { content: '🥉'; }
+
+    /* Activity Log */
+    .activity-log {
+      max-height: 200px;
+      overflow-y: auto;
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 0.9rem;
+    }
+
+    .log-entry {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      animation: slide-up 0.15s ease-out;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-icon {
+      flex-shrink: 0;
+      font-size: 1rem;
+    }
+
+    .log-time {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    .log-message {
+      flex: 1;
+    }
+
+    /* Result Section */
+    .winner-banner {
+      text-align: center;
+      padding: 24px;
+      font-size: clamp(20px, 5vw, 28px);
+      font-weight: 900;
+      color: var(--accent-green);
+      background: linear-gradient(135deg, #D4EDDA 0%, var(--primary-light) 100%);
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+
+    /* Utility Classes */
+    .d-none { display: none !important; }
+    .text-center { text-align: center; }
+    .mt-3 { margin-top: 24px; }
+    .mb-2 { margin-bottom: 16px; }
+
+    /* Animations */
+    @keyframes pop-in {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slide-up {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse-red {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="app-name"><i class="fas fa-gamepad"></i> QuizHost</div>
+    <span id="status-badge" class="status-badge waiting">Menunggu</span>
+  </header>
+
+  <div class="container">
+    <!-- Step 1: Create Quiz -->
+    <div id="create-section">
+      <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <div class="card-header" style="background: var(--primary-light);">Buat Quiz Baru</div>
+        <div class="card-body">
+          <div class="form-group">
+            <input type="text" id="host-name" class="form-control" placeholder="Nama Host" maxlength="30">
+          </div>
+          <button id="btn-create" class="btn btn-primary btn-block"><i class="fas fa-rocket"></i> Buat Quiz</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Active Quiz Panel -->
+    <div id="quiz-panel" class="d-none">
+      <!-- Quiz Code Display -->
+      <div class="card quiz-code-section">
+        <div class="card-body">
+          <div class="quiz-code-label">Kode Quiz — Bagikan ke peserta</div>
+          <div id="quiz-code" class="quiz-code-display">------</div>
+        </div>
+      </div>
+
+      <!-- Timer Display -->
+      <div id="timer-section" class="card d-none">
+        <div class="card-header"><i class="fas fa-stopwatch"></i> Timer Soal</div>
+        <div class="card-body">
+          <div id="host-timer" class="timer-display idle">--</div>
+        </div>
+      </div>
+
+      <!-- Answer Stats -->
+      <div id="answer-stats-section" class="card d-none">
+        <div class="card-header"><i class="fas fa-bolt"></i> Status Jawaban</div>
+        <div class="card-body">
+          <div class="stats-label" id="answer-stats-text">0 / 0 pemain</div>
+          <div class="progress-bar-container">
+            <div id="answer-progress" class="progress-bar-fill" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Questions -->
+      <div id="upload-section" class="card">
+        <div class="card-header"><i class="fas fa-pen-to-square"></i> Upload Soal</div>
+        <div class="card-body" id="question-form">
+          <div class="form-group">
+            <input type="text" id="q-text" class="form-control" placeholder="Tulis pertanyaan...">
+          </div>
+          <div class="form-grid-2">
+            <input type="text" id="q-opt-a" class="form-control" placeholder="Opsi A">
+            <input type="text" id="q-opt-b" class="form-control" placeholder="Opsi B">
+            <input type="text" id="q-opt-c" class="form-control" placeholder="Opsi C">
+            <input type="text" id="q-opt-d" class="form-control" placeholder="Opsi D">
+          </div>
+          <div class="form-grid-2" style="margin-top: 16px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px; display: block;">Jawaban Benar</label>
+              <div class="select-wrapper">
+                <select id="q-correct" class="form-control">
+                  <option value="A">Opsi A</option>
+                  <option value="B">Opsi B</option>
+                  <option value="C">Opsi C</option>
+                  <option value="D">Opsi D</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px; display: block;">Waktu (detik)</label>
+              <input type="number" id="q-time" class="form-control" value="20" min="5" max="120" placeholder="20">
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <button id="btn-add-question" class="btn btn-secondary">+ Tambah Soal</button>
+            <button id="btn-upload" class="btn btn-success" disabled><i class="fas fa-upload"></i> Upload Semua</button>
+          </div>
+          <div id="question-count" class="text-center" style="margin-top: 16px; color: var(--text-secondary); font-weight: 700;">Belum ada soal ditambahkan</div>
+        </div>
+      </div>
+
+      <!-- Main Grid: Leaderboard & Player List -->
+      <div class="main-grid">
+        <!-- Left Column -->
+        <div>
+          <!-- Leaderboard -->
+          <div class="card">
+            <div class="card-header"><i class="fas fa-trophy"></i> Leaderboard</div>
+            <div class="card-body" style="padding: 16px;">
+              <div class="leaderboard-header">
+                <div>#</div>
+                <div>Nama</div>
+                <div>Skor</div>
+                <div><i class="fas fa-check" style="color: var(--accent-green);"></i></div>
+                <div><i class="fas fa-xmark" style="color: var(--accent-red);"></i></div>
+                <div><i class="fas fa-minus" style="color: var(--text-secondary);"></i></div>
+              </div>
+              <div id="leaderboard-body"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+          <!-- Player List -->
+          <div class="card">
+            <div class="card-header player-list-header">
+              <span><i class="fas fa-users"></i> Pemain <span id="player-count" class="count-badge">0</span></span>
+            </div>
+            <div class="card-body">
+              <ul id="player-list" class="player-list"></ul>
+              <div id="spectator-count" class="spectator-indicator d-none"><i class="fas fa-eye"></i> <span class="spectator-number">0</span> Spectator</div>
+            </div>
+          </div>
+
+          <!-- Activity Log -->
+          <div class="card">
+            <div class="card-header"><i class="fas fa-clipboard-list"></i> Aktivitas</div>
+            <div class="card-body" style="padding: 16px;">
+              <div id="activity-log" class="activity-log"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Control Bar -->
+      <div id="control-section" class="card d-none">
+        <div class="card-header"><i class="fas fa-gamepad"></i> Kontrol Quiz</div>
+        <div class="card-body">
+          <div class="control-bar">
+            <button id="btn-start" class="btn btn-success"><i class="fas fa-play"></i> Start</button>
+            <button id="btn-next" class="btn btn-secondary" disabled><i class="fas fa-forward-step"></i> Next</button>
+            <button id="btn-end" class="btn btn-danger" disabled><i class="fas fa-ban"></i> End</button>
+            <button id="btn-get-result" class="btn btn-primary" disabled><i class="fas fa-trophy"></i> Hasil</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Panel -->
+      <div id="result-section" class="card d-none">
+        <div class="card-header" style="background: var(--accent-green); color: white;"><i class="fas fa-party-horn"></i> Hasil Akhir Quiz</div>
+        <div class="card-body">
+          <div id="winner-name" class="winner-banner"></div>
+          <div class="leaderboard-header">
+            <div>#</div>
+            <div>Nama</div>
+            <div>Skor</div>
+            <div><i class="fas fa-check" style="color: var(--accent-green);"></i></div>
+            <div><i class="fas fa-xmark" style="color: var(--accent-red);"></i></div>
+            <div><i class="fas fa-minus" style="color: var(--text-secondary);"></i></div>
+          </div>
+          <div id="result-body"></div>
+        </div>
+      </div>
+
+      <!-- New Quiz Button -->
+      <div id="new-quiz-section" class="d-none text-center mt-3">
+        <button id="btn-new-quiz" class="btn btn-primary" style="padding: 18px 48px; font-size: 1.1rem;"><i class="fas fa-gamepad"></i> Buat Quiz Baru</button>
+      </div>
+
+      <!-- Kick Confirm (inline) -->
+      <div id="kick-confirm" class="kick-confirm-card d-none">
+        <div class="kick-confirm-text">Keluarkan <strong id="kick-confirm-name"></strong> dari sesi?</div>
+        <div class="kick-confirm-actions">
+          <button id="kick-confirm-yes" class="btn btn-danger btn-sm">Ya, Kick</button>
+          <button id="kick-confirm-no" class="btn btn-secondary btn-sm">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let sessionId = null;
+    let hostId = null;
+    let quizCode = null;
+    let questions = [];
+    let quizStatus = 'waiting';
+
+    function log(msg) {
+      const el = document.getElementById('activity-log');
+      const ts = new Date().toLocaleTimeString();
+      let iconClass = 'fa-circle';
+      let iconColor = 'var(--text-secondary)';
+      
+      if (msg.includes('bergabung') || msg.includes('rejoined')) {
+        iconClass = 'fa-circle';
+        iconColor = 'var(--accent-green)';
+      } else if (msg.includes('keluar')) {
+        iconClass = 'fa-circle';
+        iconColor = 'var(--accent-red)';
+      } else if (msg.includes('dikeluarkan') || msg.includes('Kick')) {
+        iconClass = 'fa-ban';
+        iconColor = 'var(--accent-red)';
+      } else if (msg.includes('Jawaban') || msg.includes('jawaban')) {
+        iconClass = 'fa-bolt';
+        iconColor = 'var(--accent-purple)';
+      } else if (msg.includes('dimulai') || msg.includes('Quiz') || msg.includes('control')) {
+        iconClass = 'fa-gamepad';
+        iconColor = 'var(--accent-blue)';
+      } else if (msg.includes('ERROR')) {
+        iconClass = 'fa-bell';
+        iconColor = '#FFB020';
+      }
+      
+      // Prepend new entries at the top
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="log-icon"><i class="fas ${iconClass}" style="color: ${iconColor};"></i></span><span class="log-time">[${ts}]</span><span class="log-message">${msg}</span>`;
+      el.insertBefore(entry, el.firstChild);
+      
+      // Keep only last 50 entries
+      while (el.children.length > 50) {
+        el.removeChild(el.lastChild);
+      }
+    }
+
+    function connect() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}`);
+
+      ws.onopen = () => log('Terhubung ke server');
+      ws.onclose = () => log('Koneksi terputus');
+      ws.onerror = () => log('Error koneksi WebSocket');
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        handleMessage(msg);
+      };
+    }
+
+    function reconnect() {
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+      }
+      connect();
+    }
+
+    function resetHostUI() {
+      sessionId = null;
+      hostId = null;
+      quizCode = null;
+      questions = [];
+      quizStatus = 'waiting';
+      updateStatusBadge();
+
+      document.getElementById('create-section').classList.remove('d-none');
+      document.getElementById('quiz-panel').classList.add('d-none');
+      document.getElementById('quiz-code').textContent = '------';
+      document.getElementById('player-list').innerHTML = '';
+      document.getElementById('player-count').textContent = '0';
+      document.getElementById('leaderboard-body').innerHTML = '';
+      document.getElementById('activity-log').innerHTML = '';
+      document.getElementById('result-section').classList.add('d-none');
+      document.getElementById('result-body').innerHTML = '';
+      document.getElementById('winner-name').textContent = '';
+      document.getElementById('new-quiz-section').classList.add('d-none');
+      document.getElementById('upload-section').classList.remove('d-none');
+      document.getElementById('control-section').classList.add('d-none');
+      document.getElementById('upload-section').classList.remove('d-none');
+      document.getElementById('timer-section').classList.add('d-none');
+      document.getElementById('answer-stats-section').classList.add('d-none');
+      document.getElementById('question-count').textContent = 'Belum ada soal ditambahkan';
+      document.getElementById('btn-upload').disabled = true;
+      document.getElementById('btn-start').disabled = false;
+      document.getElementById('btn-next').disabled = true;
+      document.getElementById('btn-end').disabled = true;
+      document.getElementById('btn-get-result').disabled = true;
+      document.getElementById('host-timer').textContent = '--';
+      document.getElementById('host-timer').className = 'timer-display idle';
+      document.getElementById('answer-progress').style.width = '0%';
+      document.getElementById('answer-stats-text').textContent = '0 / 0 pemain';
+      document.getElementById('spectator-count').classList.add('d-none');
+      document.getElementById('host-name').value = '';
+      document.getElementById('q-text').value = '';
+      document.getElementById('q-opt-a').value = '';
+      document.getElementById('q-opt-b').value = '';
+      document.getElementById('q-opt-c').value = '';
+      document.getElementById('q-opt-d').value = '';
+      document.getElementById('q-time').value = '20';
+
+      reconnect();
+    }
+
+    function send(type, payload) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type, payload }));
+      }
+    }
+
+    function handleMessage(msg) {
+      const { type, payload } = msg;
+      log(`${type}: ${JSON.stringify(payload)}`);
+
+      switch (type) {
+        case 'QUIZ_CREATED':
+          sessionId = payload.session_id;
+          hostId = payload.host_id;
+          quizCode = payload.quiz_code;
+          document.getElementById('quiz-code').textContent = quizCode;
+          document.getElementById('create-section').classList.add('d-none');
+          document.getElementById('quiz-panel').classList.remove('d-none');
+          break;
+
+        case 'JOIN_SUCCESS':
+          break;
+
+        case 'PLAYER_JOINED':
+          log(`<span style="color: var(--accent-green)">${payload.message}</span>`);
+          break;
+
+        case 'PLAYER_LEFT':
+          log(`<span style="color: var(--accent-red)">${payload.player_name} keluar dari quiz</span>`);
+          break;
+
+        case 'PLAYER_LIST_UPDATE':
+          renderPlayerList(payload);
+          break;
+
+        case 'PLAYER_REJOINED':
+          log(`<span style="color: var(--accent-blue)">${payload.message}</span>`);
+          break;
+
+        case 'SPECTATOR_JOINED':
+          log(`<span style="color: var(--accent-blue)">Spectator ${payload.name} bergabung</span>`);
+          updateSpectatorCount(payload.count);
+          break;
+
+        case 'SPECTATOR_LEFT':
+          log(`<span style="color: var(--text-secondary)">Spectator ${payload.name} keluar</span>`);
+          updateSpectatorCount(payload.count);
+          break;
+
+        case 'PLAYER_KICKED':
+          log(`<span style="color: var(--accent-red)">${payload.playerName} dikeluarkan dari sesi</span>`);
+          break;
+
+        case 'LEADERBOARD_UPDATE':
+          renderLeaderboard(payload.entries);
+          break;
+
+        case 'QUIZ_EVENT':
+          handleQuizEvent(payload);
+          break;
+
+        case 'TIMER_TICK':
+          handleTimerTick(payload);
+          break;
+
+        case 'TIMER_EXPIRED':
+          document.getElementById('host-timer').textContent = '0';
+          document.getElementById('host-timer').className = 'timer-display danger';
+          break;
+
+        case 'ANSWER_STATS':
+          handleAnswerStats(payload);
+          break;
+
+        case 'QUIZ_ENDED':
+          quizStatus = 'ended';
+          updateStatusBadge();
+          document.getElementById('btn-start').disabled = true;
+          document.getElementById('btn-next').disabled = true;
+          document.getElementById('btn-end').disabled = true;
+          document.getElementById('btn-get-result').disabled = false;
+          document.getElementById('new-quiz-section').classList.remove('d-none');
+          document.getElementById('timer-section').classList.add('d-none');
+          document.getElementById('answer-stats-section').classList.add('d-none');
+          break;
+
+        case 'UPLOAD_RESULT':
+          if (payload.success) {
+            log(`Upload sukses: ${payload.message}`);
+            document.getElementById('upload-section').classList.add('d-none');
+            document.getElementById('control-section').classList.remove('d-none');
+            quizStatus = 'waiting';
+            updateStatusBadge();
+          }
+          break;
+
+        case 'CONTROL_RESULT':
+          if (payload.success) {
+            if (payload.action === 'start') {
+              quizStatus = 'active';
+              document.getElementById('btn-start').disabled = true;
+              document.getElementById('btn-next').disabled = false;
+              document.getElementById('btn-end').disabled = false;
+            } else if (payload.action === 'next') {
+              // nothing extra
+            } else if (payload.action === 'end') {
+              quizStatus = 'ended';
+              document.getElementById('btn-start').disabled = true;
+              document.getElementById('btn-next').disabled = true;
+              document.getElementById('btn-end').disabled = true;
+              document.getElementById('btn-get-result').disabled = false;
+              document.getElementById('new-quiz-section').classList.remove('d-none');
+              document.getElementById('timer-section').classList.add('d-none');
+              document.getElementById('answer-stats-section').classList.add('d-none');
+            }
+            updateStatusBadge();
+          }
+          break;
+
+        case 'QUIZ_RESULT':
+          renderResult(payload);
+          break;
+
+        case 'ERROR':
+          log(`<span style="color: var(--accent-red)">ERROR: ${payload.message}</span>`);
+          break;
+      }
+    }
+
+    function handleQuizEvent(payload) {
+      const evtType = payload.type;
+      if (evtType === 'QUESTION_START') {
+        log(`<span style="color: var(--accent-purple)">Soal ${payload.question.question_number}/${payload.question.total_questions}: ${payload.question.text}</span>`);
+        document.getElementById('timer-section').classList.remove('d-none');
+        document.getElementById('answer-stats-section').classList.remove('d-none');
+        document.getElementById('answer-progress').style.width = '0%';
+        document.getElementById('answer-stats-text').textContent = '0 / 0 pemain';
+      } else if (evtType === 'ANSWER_REVEAL') {
+        log(`<span style="color: var(--accent-green)">Jawaban benar: ${payload.correct_answer}</span>`);
+        document.getElementById('timer-section').classList.add('d-none');
+      }
+    }
+
+    function handleTimerTick(payload) {
+      const remaining = payload.remaining;
+      const timerEl = document.getElementById('host-timer');
+      timerEl.textContent = remaining;
+      if (remaining <= 5) {
+        timerEl.className = 'timer-display danger';
+      } else if (remaining <= 10) {
+        timerEl.className = 'timer-display warning';
+      } else {
+        timerEl.className = 'timer-display active';
+      }
+    }
+
+    function handleAnswerStats(payload) {
+      const progressEl = document.getElementById('answer-progress');
+      const textEl = document.getElementById('answer-stats-text');
+      const percent = payload.percent || 0;
+      progressEl.style.width = `${percent}%`;
+      textEl.textContent = `${payload.answered} / ${payload.total} pemain (${percent}%)`;
+    }
+
+    function renderPlayerList(payload) {
+      const list = document.getElementById('player-list');
+      const cnt = document.getElementById('player-count');
+      list.innerHTML = '';
+      const players = payload.players || [];
+      cnt.textContent = payload.count != null ? payload.count : players.length;
+      players.forEach((name) => {
+        const li = document.createElement('li');
+        li.className = 'player-item';
+        li.innerHTML = `<span class="player-name">${name}</span><span class="player-actions"><span class="in-room-badge">In Room</span><button class="kick-btn" data-player="${name}" title="Keluarkan ${name}"><i class="fas fa-xmark"></i></button></span>`;
+        list.appendChild(li);
+      });
+
+      list.querySelectorAll('.kick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pName = btn.getAttribute('data-player');
+          showKickConfirm(pName);
+        });
+      });
+    }
+
+    function showKickConfirm(playerName) {
+      const el = document.getElementById('kick-confirm');
+      document.getElementById('kick-confirm-name').textContent = playerName;
+      el.classList.remove('d-none');
+      document.getElementById('kick-confirm-yes').onclick = () => {
+        send('KICK_PLAYER', { quiz_code: quizCode, playerName });
+        el.classList.add('d-none');
+      };
+      document.getElementById('kick-confirm-no').onclick = () => {
+        el.classList.add('d-none');
+      };
+    }
+
+    function renderLeaderboard(entries) {
+      const container = document.getElementById('leaderboard-body');
+      container.innerHTML = '';
+      entries.forEach((e) => {
+        const row = document.createElement('div');
+        let rankClass = 'other';
+        let rankDisplay = e.rank || 0;
+        if (e.rank === 1) { rankClass = 'rank-1'; rankDisplay = '1'; }
+        else if (e.rank === 2) { rankClass = 'rank-2'; rankDisplay = '2'; }
+        else if (e.rank === 3) { rankClass = 'rank-3'; rankDisplay = '3'; }
+        
+        row.className = `leaderboard-row ${rankClass}`;
+        row.innerHTML = `<div class="rank-cell">${rankDisplay}</div><div>${e.player_name}</div><div>${e.score}</div><div>${e.correct != null ? e.correct : 0}</div><div>${e.wrong != null ? e.wrong : 0}</div><div>${e.unanswered != null ? e.unanswered : 0}</div>`;
+        container.appendChild(row);
+      });
+    }
+
+    function renderResult(payload) {
+      document.getElementById('result-section').classList.remove('d-none');
+      document.getElementById('winner-name').innerHTML = payload.winner_name
+        ? '<i class="fas fa-trophy"></i> Pemenang: ' + payload.winner_name
+        : 'Belum ada pemenang';
+      const container = document.getElementById('result-body');
+      container.innerHTML = '';
+      (payload.leaderboard || []).forEach((entry, i) => {
+        const row = document.createElement('div');
+        let rankClass = 'other';
+        let rankDisplay = entry.rank || i + 1;
+        if (entry.rank === 1) { rankClass = 'rank-1'; rankDisplay = '1'; }
+        else if (entry.rank === 2) { rankClass = 'rank-2'; rankDisplay = '2'; }
+        else if (entry.rank === 3) { rankClass = 'rank-3'; rankDisplay = '3'; }
+        
+        row.className = `leaderboard-row ${rankClass}`;
+        row.innerHTML = `<div class="rank-cell">${rankDisplay}</div><div>${entry.player_name}</div><div>${entry.score}</div><div>${entry.correct_answers != null ? entry.correct_answers : 0}</div><div>${entry.wrong != null ? entry.wrong : 0}</div><div>${entry.unanswered != null ? entry.unanswered : 0}</div>`;
+        container.appendChild(row);
+      });
+    }
+
+    function updateSpectatorCount(count) {
+      const el = document.getElementById('spectator-count');
+      const numberEl = el.querySelector('.spectator-number');
+      if (count > 0) {
+        el.classList.remove('d-none');
+        numberEl.textContent = count;
+      } else {
+        el.classList.add('d-none');
+      }
+    }
+
+    function updateStatusBadge() {
+      const badge = document.getElementById('status-badge');
+      if (quizStatus === 'waiting') {
+        badge.className = 'status-badge waiting';
+        badge.textContent = 'Menunggu';
+      } else if (quizStatus === 'active') {
+        badge.className = 'status-badge active';
+        badge.textContent = 'Berlangsung';
+      } else {
+        badge.className = 'status-badge ended';
+        badge.textContent = 'Selesai';
+      }
+    }
+
+    // Event listeners
+    document.getElementById('btn-create').addEventListener('click', () => {
+      const hostName = document.getElementById('host-name').value.trim();
+      if (!hostName) {
+        alert('Masukkan nama host');
+        return;
+      }
+      send('CREATE_QUIZ', { host_name: hostName });
+    });
+
+    document.getElementById('btn-add-question').addEventListener('click', () => {
+      const text = document.getElementById('q-text').value.trim();
+      const optA = document.getElementById('q-opt-a').value.trim();
+      const optB = document.getElementById('q-opt-b').value.trim();
+      const optC = document.getElementById('q-opt-c').value.trim();
+      const optD = document.getElementById('q-opt-d').value.trim();
+      const correct = document.getElementById('q-correct').value;
+      const time = parseInt(document.getElementById('q-time').value) || 20;
+
+      if (!text || !optA || !optB || !optC || !optD) {
+        alert('Semua field soal wajib diisi');
+        return;
+      }
+
+      questions.push({
+        question_text: text,
+        options: [optA, optB, optC, optD],
+        correct_answer: correct,
+        time_limit: time
+      });
+
+      document.getElementById('q-text').value = '';
+      document.getElementById('q-opt-a').value = '';
+      document.getElementById('q-opt-b').value = '';
+      document.getElementById('q-opt-c').value = '';
+      document.getElementById('q-opt-d').value = '';
+      document.getElementById('q-time').value = '20';
+
+      document.getElementById('question-count').textContent = `${questions.length} soal ditambahkan`;
+      document.getElementById('btn-upload').disabled = false;
+    });
+
+    document.getElementById('btn-upload').addEventListener('click', () => {
+      if (questions.length === 0) return;
+      send('UPLOAD_QUESTIONS', {
+        session_id: sessionId,
+        host_id: hostId,
+        questions: questions
+      });
+    });
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+      send('CONTROL_QUIZ', { action: 'start', session_id: sessionId, host_id: hostId });
+    });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      send('CONTROL_QUIZ', { action: 'next', session_id: sessionId, host_id: hostId });
+    });
+
+    document.getElementById('btn-end').addEventListener('click', () => {
+      if (confirm('Yakin ingin mengakhiri quiz?')) {
+        send('CONTROL_QUIZ', { action: 'end', session_id: sessionId, host_id: hostId });
+      }
+    });
+
+    document.getElementById('btn-get-result').addEventListener('click', () => {
+      send('GET_RESULT', { session_id: sessionId });
+    });
+
+    document.getElementById('btn-new-quiz').addEventListener('click', () => {
+      if (confirm('Mulai quiz baru? Koneksi akan direset.')) {
+        resetHostUI();
+      }
+    });
+
+    connect();
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package quiz;
+
+service QuizService {
+  rpc CreateQuiz (CreateQuizRequest) returns (CreateQuizResponse);
+  rpc JoinQuiz (JoinQuizRequest) returns (JoinQuizResponse);
+  rpc SubmitAnswer (SubmitAnswerRequest) returns (SubmitAnswerResponse);
+  rpc GetQuizResult (GetQuizResultRequest) returns (GetQuizResultResponse);
+}
+
+message CreateQuizRequest {
+  string host_name = 1;
+}
+
+message CreateQuizResponse {
+  string quiz_code = 1;
+  string session_id = 2;
+  string host_id = 3;
+}
+
+message JoinQuizRequest {
+  string quiz_code = 1;
+  string player_name = 2;
+}
+
+message JoinQuizResponse {
+  string player_id = 1;
+  string session_id = 2;
+  string status = 3;
+}
+
+message SubmitAnswerRequest {
+  string player_id = 1;
+  string session_id = 2;
+  string question_id = 3;
+  string answer = 4;
+  int64 submitted_at = 5;
+}
+
+message SubmitAnswerResponse {
+  bool correct = 1;
+  int32 score_gained = 2;
+  int32 total_score = 3;
+}
+
+message GetQuizResultRequest {
+  string session_id = 1;
+}
+
+message PlayerResult {
+  string player_name = 1;
+  int32 score = 2;
+  int32 correct_answers = 3;
+}
+
+message GetQuizResultResponse {
+  repeated PlayerResult leaderboard = 1;
+  string winner_name = 2;
+}

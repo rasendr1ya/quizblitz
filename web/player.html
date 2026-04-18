@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Quiz — Peserta</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --primary: #FFD000;
+      --primary-dark: #E6B800;
+      --primary-light: #FFF3B0;
+      --accent-green: #58CC02;
+      --accent-red: #FF4B4B;
+      --accent-blue: #1CB0F6;
+      --accent-purple: #CE82FF;
+      --bg: #F7F7F7;
+      --surface: #FFFFFF;
+      --surface-2: #F0F0F0;
+      --text-primary: #3C3C3C;
+      --text-secondary: #777777;
+      --border: #E5E5E5;
+      --shadow: 0 4px 0px;
+      --opt-a: #FF6B6B;
+      --opt-b: #4ECDC4;
+      --opt-c: #FFE66D;
+      --opt-d: #A78BFA;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      font-size: clamp(14px, 3.5vw, 16px);
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* Reconnect Banner */
+    #reconnect-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #2D3748;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      font-weight: 700;
+      z-index: 9999;
+      animation: slide-up 0.3s ease-out;
+    }
+
+    #reconnect-banner.d-none {
+      display: none !important;
+    }
+
+    /* Kicked Overlay */
+    #kicked-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 75, 75, 0.95);
+      z-index: 10000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    #kicked-overlay.d-none {
+      display: none !important;
+    }
+
+    .kicked-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .kicked-title {
+      font-size: clamp(24px, 6vw, 36px);
+      font-weight: 900;
+      margin-bottom: 1rem;
+    }
+
+    .kicked-message {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin-bottom: 2rem;
+    }
+
+    /* Container */
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 1rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      margin-bottom: 1rem;
+    }
+
+    .header-title {
+      font-size: clamp(18px, 4vw, 22px);
+      font-weight: 800;
+    }
+
+    .quiz-code-badge {
+      background: var(--primary);
+      color: var(--text-primary);
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    /* Spectator Badge */
+    .spectator-badge-container {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .spectator-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent-blue);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 1rem;
+      overflow: hidden;
+      animation: pop-in 0.2s ease-out;
+    }
+
+    .card-header {
+      padding: 1rem 1.25rem;
+      font-weight: 800;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-body {
+      padding: 1.25rem;
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      min-height: 56px;
+      width: 100%;
+    }
+
+    .btn:active {
+      transform: translateY(4px);
+      box-shadow: none !important;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--text-primary);
+      box-shadow: 0 4px 0 var(--primary-dark);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text-primary);
+      border: 2px solid var(--border);
+      box-shadow: 0 4px 0 var(--border);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--text-secondary);
+      color: var(--text-secondary);
+    }
+
+    .btn-sm {
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      min-height: 44px;
+    }
+
+    .btn-danger {
+      background: var(--accent-red);
+      color: white;
+      box-shadow: 0 4px 0 #CC3333;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #E04343;
+    }
+
+    /* Form Inputs */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-control {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 14px 18px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+      color: var(--text-primary);
+      width: 100%;
+      transition: all 0.15s ease;
+      min-height: 56px;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    .form-control::placeholder {
+      color: var(--text-secondary);
+    }
+
+    /* Answer Buttons */
+    .answer-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .answer-btn {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 16px 20px;
+      border: 2px solid;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-height: 56px;
+      text-align: left;
+      background: var(--surface);
+    }
+
+    .answer-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .answer-btn-opt-a {
+      border-color: var(--opt-a);
+      color: var(--text-primary);
+    }
+
+    .answer-btn-opt-a:hover:not(:disabled) {
+      background: rgba(255, 107, 107, 0.1);
+    }
+
+    .answer-btn-opt-b {
+      border-color: var(--opt-b);
+      color: var(--text-primary);
+    }
+
+    .answer-btn-opt-b:hover:not(:disabled) {
+      background: rgba(78, 205, 196, 0.1);
+    }
+
+    .answer-btn-opt-c {
+      border-color: #D4B800;
+      color: var(--text-primary);
+    }
+
+    .answer-btn-opt-c:hover:not(:disabled) {
+      background: rgba(255, 230, 109, 0.3);
+    }
+
+    .answer-btn-opt-d {
+      border-color: var(--opt-d);
+      color: var(--text-primary);
+    }
+
+    .answer-btn-opt-d:hover:not(:disabled) {
+      background: rgba(167, 139, 250, 0.1);
+    }
+
+    .answer-btn.correct {
+      background: var(--accent-green) !important;
+      border-color: var(--accent-green) !important;
+      color: white !important;
+      animation: pop-in 0.2s ease-out;
+      transform: scale(1.03);
+    }
+
+    .answer-btn.wrong {
+      background: var(--accent-red) !important;
+      border-color: var(--accent-red) !important;
+      color: white !important;
+      animation: shake 0.4s ease;
+    }
+
+    .answer-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .answer-btn-opt-a .answer-badge { background: var(--opt-a); color: white; }
+    .answer-btn-opt-b .answer-badge { background: var(--opt-b); color: white; }
+    .answer-btn-opt-c .answer-badge { background: var(--opt-c); color: var(--text-primary); }
+    .answer-btn-opt-d .answer-badge { background: var(--opt-d); color: white; }
+
+    /* Timer */
+    .timer-container {
+      margin-bottom: 1rem;
+    }
+
+    .timer-label {
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .timer-bar {
+      height: 12px;
+      background: var(--surface-2);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .timer-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 1s linear;
+    }
+
+    .timer-fill.high { background: var(--accent-green); }
+    .timer-fill.medium { background: #FFB020; }
+    .timer-fill.low { background: var(--accent-red); }
+
+    .timer-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 900;
+      margin: 0 auto 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .timer-circle.idle {
+      background: var(--surface-2);
+      color: var(--text-secondary);
+    }
+
+    .timer-circle.active {
+      background: var(--accent-green);
+      color: white;
+    }
+
+    .timer-circle.warning {
+      background: #FFB020;
+      color: var(--text-primary);
+    }
+
+    .timer-circle.danger {
+      background: var(--accent-red);
+      color: white;
+      animation: timer-pulse 0.5s ease infinite;
+    }
+
+    /* Feedback Card */
+    .feedback-card {
+      padding: 1.5rem;
+      text-align: center;
+      border-radius: 12px;
+      margin-top: 1rem;
+      animation: pop-in 0.3s ease-out;
+    }
+
+    .feedback-card.correct {
+      background: #D4EDDA;
+      color: #155724;
+    }
+
+    .feedback-card.wrong {
+      background: #F8D7DA;
+      color: #721C24;
+    }
+
+    .feedback-card.unanswered {
+      background: #FFF3CD;
+      color: #856404;
+    }
+
+    .feedback-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .feedback-text {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .feedback-score {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    /* Peer Status */
+    .peer-status-panel {
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    .peer-status-title {
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .peer-status-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .peer-status-column h4 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .peer-status-column.answered h4 {
+      color: var(--accent-green);
+    }
+
+    .peer-status-column.pending h4 {
+      color: var(--text-secondary);
+    }
+
+    .peer-item {
+      font-size: 0.9rem;
+      padding: 0.25rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    /* Leaderboard */
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 40px 1fr 60px;
+      gap: 0.5rem;
+      padding: 0.6rem 0.75rem;
+      align-items: center;
+      border-radius: 10px;
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
+    }
+
+    .leaderboard-row.rank-1 {
+      background: var(--primary);
+      font-weight: 800;
+    }
+
+    .leaderboard-row.rank-2 {
+      background: #E8E8E8;
+    }
+
+    .leaderboard-row.rank-3 {
+      background: #F5DEB3;
+    }
+
+    .leaderboard-row.other {
+      background: var(--surface-2);
+    }
+
+    .leaderboard-header {
+      display: grid;
+      grid-template-columns: 40px 1fr 60px;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      font-weight: 800;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 0.5rem;
+    }
+
+    .my-score {
+      font-weight: 700;
+      color: var(--accent-green);
+    }
+
+    /* Notification */
+    .notification {
+      background: var(--accent-blue);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 700;
+      margin-top: 1rem;
+      animation: slide-up 0.3s ease-out;
+    }
+
+    .notification.d-none {
+      display: none !important;
+    }
+
+    /* Waiting Room */
+    .waiting-animation {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 2rem;
+    }
+
+    .waiting-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: 3px solid var(--primary);
+      border-radius: 50%;
+      opacity: 0;
+      animation: pulse-ring 2s ease-out infinite;
+    }
+
+    .waiting-ring:nth-child(1) {
+      width: 60px;
+      height: 60px;
+      animation-delay: 0s;
+    }
+
+    .waiting-ring:nth-child(2) {
+      width: 90px;
+      height: 90px;
+      animation-delay: 0.5s;
+    }
+
+    .waiting-ring:nth-child(3) {
+      width: 120px;
+      height: 120px;
+      animation-delay: 1s;
+    }
+
+    .waiting-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.5rem;
+    }
+
+    .greeting {
+      font-size: clamp(24px, 6vw, 32px);
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .waiting-subtext {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .player-count-text {
+      text-align: center;
+      font-weight: 700;
+      color: var(--accent-green);
+    }
+
+    /* Utility Classes */
+    .d-none { display: none !important; }
+    .d-flex { display: flex !important; }
+    .text-center { text-align: center; }
+    .position-relative { position: relative; }
+    .mb-2 { margin-bottom: 1rem; }
+    .mb-3 { margin-bottom: 1.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mt-3 { margin-top: 1.5rem; }
+    .w-100 { width: 100%; }
+    .fw-bold { font-weight: 800; }
+
+    /* Animations */
+    @keyframes pulse-ring {
+      0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    @keyframes pop-in {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes timer-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes slide-up {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Reconnect Banner -->
+  <div id="reconnect-banner" class="d-none">
+    <span id="reconnect-text">Koneksi terputus. Mencoba menyambung ulang...</span>
+    <button id="btn-try-again" class="btn btn-sm btn-secondary d-none" style="width: auto; margin-left: 1rem;">Coba Lagi</button>
+  </div>
+
+  <!-- Kicked Overlay -->
+  <div id="kicked-overlay">
+    <div class="kicked-icon"><i class="fas fa-ban" style="font-size: 4rem;"></i></div>
+    <div class="kicked-title">Kamu Dikeluarkan</div>
+    <div class="kicked-message">Host telah mengeluarkanmu dari sesi quiz ini.</div>
+    <button id="btn-back-home" class="btn btn-lg" style="background: white; color: var(--accent-red);">Kembali ke Beranda</button>
+  </div>
+
+  <div class="container">
+    <!-- Spectator Mode Badge -->
+    <div id="spectator-badge-container" class="spectator-badge-container d-none">
+      <span class="spectator-badge"><i class="fas fa-eye"></i> Spectator Mode</span>
+    </div>
+
+    <!-- Join Section -->
+    <div id="join-section">
+      <div class="card" style="margin-top: 2rem;">
+        <div class="card-header" style="background: var(--primary); justify-content: center;">
+          Gabung Quiz
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <input type="text" id="player-name" class="form-control" placeholder="Nama Kamu" maxlength="30">
+          </div>
+          <div class="form-group">
+            <input type="text" id="quiz-code" class="form-control" placeholder="KODE QUIZ" maxlength="10" style="text-transform: uppercase; letter-spacing: 0.1em; text-align: center;">
+          </div>
+          <button id="btn-join" class="btn btn-primary mb-2"><i class="fas fa-gamepad"></i> Join as Player</button>
+          <button id="btn-spectate" class="btn btn-outline"><i class="fas fa-eye"></i> Join as Spectator</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Play Section -->
+    <div id="play-section" class="d-none">
+      <!-- Waiting Screen -->
+      <div id="waiting-screen">
+        <div class="card" style="margin-top: 2rem;">
+          <div class="card-body" style="position: relative;">
+            <button id="btn-leave-waiting" class="btn btn-sm btn-danger" style="position: absolute; top: 1rem; right: 1rem; width: auto;">Keluar</button>
+            
+            <div class="waiting-animation">
+              <div class="waiting-ring"></div>
+              <div class="waiting-ring"></div>
+              <div class="waiting-ring"></div>
+              <div class="waiting-center"><i class="fas fa-hourglass-half"></i></div>
+            </div>
+            
+            <div id="waiting-greeting" class="greeting">Halo! <i class="fas fa-hand-wave"></i></div>
+            <div class="waiting-subtext">Menunggu host memulai quiz...</div>
+            <div id="waiting-player-count" class="player-count-text">0 pemain sudah bergabung</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question Screen -->
+      <div id="question-screen" class="d-none" style="position: relative;">
+        <button id="btn-leave-question" class="btn btn-sm btn-danger d-none" style="position: absolute; top: 0; right: 0; width: auto; z-index: 10;">Keluar</button>
+        
+        <!-- Timer Circle -->
+        <div id="timer-circle" class="timer-circle idle">--</div>
+
+        <!-- Question Card -->
+        <div class="card">
+          <div class="card-header" style="background: var(--text-primary); color: white;">
+            <span id="question-number">Soal -/--</span>
+            <span id="question-label">Menunggu...</span>
+          </div>
+          <div class="card-body">
+            <h5 id="question-text" class="text-center mb-3" style="font-size: clamp(18px, 4vw, 22px);">Memuat soal...</h5>
+            
+            <!-- Timer Progress Bar -->
+            <div class="timer-container">
+              <div class="timer-bar">
+                <div id="timer-fill" class="timer-fill high" style="width: 100%;"></div>
+              </div>
+            </div>
+
+            <!-- Answer Buttons -->
+            <div id="answer-buttons" class="answer-options">
+              <button class="answer-btn answer-btn-opt-a" data-option="A">
+                <span class="answer-badge">A</span>
+                <span class="answer-text">---</span>
+              </button>
+              <button class="answer-btn answer-btn-opt-b" data-option="B">
+                <span class="answer-badge">B</span>
+                <span class="answer-text">---</span>
+              </button>
+              <button class="answer-btn answer-btn-opt-c" data-option="C">
+                <span class="answer-badge">C</span>
+                <span class="answer-text">---</span>
+              </button>
+              <button class="answer-btn answer-btn-opt-d" data-option="D">
+                <span class="answer-badge">D</span>
+                <span class="answer-text">---</span>
+              </button>
+            </div>
+
+            <!-- Feedback Area -->
+            <div id="feedback-area" class="d-none">
+              <div id="feedback-content" class="feedback-card">
+                <div id="feedback-icon" class="feedback-icon"></div>
+                <div id="feedback-text" class="feedback-text"></div>
+                <div id="feedback-score" class="feedback-score"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Peer Status Panel -->
+        <div id="peer-status-panel" class="peer-status-panel d-none">
+          <div class="peer-status-title"><i class="fas fa-bolt"></i> Status Peserta</div>
+          <div class="peer-status-columns">
+            <div class="peer-status-column answered">
+              <h4><i class="fas fa-check" style="color: var(--accent-green);"></i> Sudah</h4>
+              <div id="answered-list"></div>
+            </div>
+            <div class="peer-status-column pending">
+              <h4><i class="fas fa-ellipsis" style="color: var(--text-secondary);"></i> Menunggu</h4>
+              <div id="pending-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notification Area -->
+        <div id="notification-area">
+          <div id="server-alert" class="notification d-none"></div>
+        </div>
+
+        <!-- Leaderboard Panel -->
+        <div class="card mt-3">
+          <div class="card-header" style="background: var(--primary-light);">
+            <span><i class="fas fa-trophy"></i> Leaderboard</span>
+            <span id="my-score" class="my-score"></span>
+          </div>
+          <div class="card-body" style="padding: 0.75rem;">
+            <div class="leaderboard-header">
+              <div>#</div>
+              <div>Nama</div>
+              <div>Skor</div>
+            </div>
+            <div id="player-leaderboard"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ended Screen -->
+      <div id="ended-screen" class="d-none">
+        <div class="card" style="margin-top: 1rem;">
+          <div class="card-header" style="background: var(--accent-green); color: white; justify-content: center;">
+            <i class="fas fa-party-horn"></i> Quiz Berakhir!
+          </div>
+          <div class="card-body">
+            <div id="winner-display" class="text-center mb-3" style="font-size: clamp(20px, 5vw, 26px); font-weight: 800; color: var(--accent-green);"></div>
+            
+            <div class="leaderboard-header">
+              <div>#</div>
+              <div>Nama</div>
+              <div>Skor</div>
+            </div>
+            <div id="final-leaderboard"></div>
+            
+            <button id="btn-leave-ended" class="btn btn-danger mt-3">Keluar dari Room</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let playerId = null;
+    let sessionId = null;
+    let currentQuestion = null;
+    let answered = false;
+    let totalScore = 0;
+    let questionActive = false;
+    let playerName = '';
+    let quizCode = '';
+    let isSpectator = false;
+    let wasKicked = false;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    let reconnectTimer = null;
+    let intentionalClose = false;
+
+    function connect() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}`);
+
+      ws.onopen = () => {
+        console.log('Connected');
+        reconnectAttempts = 0;
+        hideReconnectBanner();
+
+        if (playerName && quizCode) {
+          send('REJOIN_QUIZ', { name: playerName, quiz_code: quizCode });
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('Disconnected');
+        if (wasKicked) return;
+        if (!intentionalClose && playerName && quizCode) {
+          showReconnectBanner();
+          attemptReconnect();
+        }
+      };
+
+      ws.onerror = () => console.error('WebSocket error');
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        handleMessage(msg);
+      };
+    }
+
+    function attemptReconnect() {
+      if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        document.getElementById('reconnect-text').textContent = 'Gagal menyambung ulang. Tap Coba Lagi.';
+        document.getElementById('btn-try-again').classList.remove('d-none');
+        return;
+      }
+      reconnectAttempts++;
+      document.getElementById('reconnect-text').textContent = `Koneksi terputus. Mencoba kembali (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`;
+      reconnectTimer = setTimeout(() => {
+        connect();
+      }, 3000);
+    }
+
+    function showReconnectBanner() {
+      document.getElementById('reconnect-banner').classList.remove('d-none');
+      document.getElementById('btn-try-again').classList.add('d-none');
+    }
+
+    function hideReconnectBanner() {
+      document.getElementById('reconnect-banner').classList.add('d-none');
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+    }
+
+    function reconnect() {
+      intentionalClose = true;
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+      }
+      intentionalClose = false;
+      connect();
+    }
+
+    function send(type, payload) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type, payload }));
+      }
+    }
+
+    function showNotification(msg) {
+      const el = document.getElementById('server-alert');
+      el.textContent = msg;
+      el.classList.remove('d-none');
+      setTimeout(() => el.classList.add('d-none'), 5000);
+    }
+
+    function updateTimerDisplay(remaining) {
+      const circle = document.getElementById('timer-circle');
+      const fill = document.getElementById('timer-fill');
+      
+      circle.textContent = remaining;
+      
+      // Update circle color
+      if (remaining <= 5) {
+        circle.className = 'timer-circle danger';
+        fill.className = 'timer-fill low';
+      } else if (remaining <= 10) {
+        circle.className = 'timer-circle warning';
+        fill.className = 'timer-fill medium';
+      } else {
+        circle.className = 'timer-circle active';
+        fill.className = 'timer-fill high';
+      }
+      
+      // Update progress bar width based on question time limit
+      if (currentQuestion && currentQuestion.time_limit) {
+        const percent = (remaining / currentQuestion.time_limit) * 100;
+        fill.style.width = `${percent}%`;
+      }
+    }
+
+    function disableAnswerButtons() {
+      document.querySelectorAll('.answer-btn').forEach(btn => btn.disabled = true);
+    }
+
+    function enableAnswerButtons(options) {
+      const buttons = document.querySelectorAll('.answer-btn');
+      const labels = ['A', 'B', 'C', 'D'];
+      
+      buttons.forEach((btn, i) => {
+        const optionText = options[i] || '';
+        btn.querySelector('.answer-text').textContent = optionText;
+        btn.disabled = isSpectator;
+        btn.classList.remove('correct', 'wrong', 'selected');
+        btn.style.display = isSpectator ? 'none' : 'flex';
+      });
+    }
+
+    function handleMessage(msg) {
+      const { type, payload } = msg;
+
+      switch (type) {
+        case 'JOIN_SUCCESS':
+          playerId = payload.player_id;
+          sessionId = payload.session_id;
+          playerName = playerName || document.getElementById('player-name').value.trim();
+          quizCode = quizCode || document.getElementById('quiz-code').value.trim().toUpperCase();
+          
+          document.getElementById('join-section').classList.add('d-none');
+          document.getElementById('play-section').classList.remove('d-none');
+          document.getElementById('waiting-greeting').innerHTML = `Halo, ${playerName}! <i class="fas fa-hand-wave"></i>`;
+          questionActive = false;
+          updateLeaveButtons();
+          break;
+
+        case 'REJOIN_SUCCESS':
+          playerId = payload.player_id;
+          sessionId = payload.session_id;
+          totalScore = payload.last_score || 0;
+          hideReconnectBanner();
+
+          document.getElementById('join-section').classList.add('d-none');
+          document.getElementById('play-section').classList.remove('d-none');
+          document.getElementById('waiting-greeting').innerHTML = `Halo, ${playerName}! <i class="fas fa-hand-wave"></i>`;
+
+          if (payload.quiz_status === 'ended') {
+            currentQuestion = null;
+            questionActive = false;
+            document.getElementById('peer-status-panel').classList.add('d-none');
+            document.getElementById('waiting-screen').classList.add('d-none');
+            document.getElementById('question-screen').classList.add('d-none');
+            document.getElementById('ended-screen').classList.remove('d-none');
+          } else if (payload.quiz_status === 'active' && payload.current_question) {
+            currentQuestion = payload.current_question;
+            questionActive = true;
+            answered = false;
+            document.getElementById('waiting-screen').classList.add('d-none');
+            document.getElementById('ended-screen').classList.add('d-none');
+            document.getElementById('question-screen').classList.remove('d-none');
+            document.getElementById('feedback-area').classList.add('d-none');
+
+            document.getElementById('question-number').textContent =
+              `Soal ${currentQuestion.question_number}/${currentQuestion.total_questions}`;
+            document.getElementById('question-text').textContent = currentQuestion.text;
+            enableAnswerButtons(currentQuestion.options || []);
+
+            if (payload.timer_remaining !== null && payload.timer_remaining !== undefined) {
+              updateTimerDisplay(payload.timer_remaining);
+            } else {
+              const circle = document.getElementById('timer-circle');
+              circle.className = 'timer-circle active';
+              circle.textContent = currentQuestion.time_limit || '--';
+            }
+          } else {
+            questionActive = false;
+            document.getElementById('waiting-screen').classList.remove('d-none');
+            document.getElementById('question-screen').classList.add('d-none');
+            document.getElementById('ended-screen').classList.add('d-none');
+          }
+          updateLeaveButtons();
+
+          if (payload.leaderboard && payload.leaderboard.length > 0) {
+            renderLeaderboard(payload.leaderboard);
+          }
+          break;
+
+        case 'QUIZ_EVENT':
+          handleQuizEvent(payload);
+          break;
+
+        case 'TIMER_TICK':
+          updateTimerDisplay(payload.remaining);
+          if (payload.remaining === 0) {
+            questionActive = false;
+            updateLeaveButtons();
+            disableAnswerButtons();
+          }
+          break;
+
+        case 'TIMER_EXPIRED':
+          showFeedback('unanswered', 'Waktu Habis!', '');
+          questionActive = false;
+          updateLeaveButtons();
+          disableAnswerButtons();
+          break;
+
+        case 'LEADERBOARD_UPDATE':
+          renderLeaderboard(payload.entries);
+          break;
+
+        case 'ANSWER_RESULT':
+          handleAnswerResult(payload);
+          break;
+
+        case 'PLAYER_JOINED':
+          showNotification(payload.message);
+          break;
+
+        case 'PLAYER_REJOINED':
+          showNotification(payload.message);
+          break;
+
+        case 'PLAYER_LEFT':
+          showNotification(payload.message);
+          break;
+
+        case 'QUIZ_ENDED':
+          handleQuizEnded(payload);
+          break;
+
+        case 'QUIZ_RESULT':
+          renderFinalResult(payload);
+          break;
+
+        case 'LEAVE_CONFIRMED':
+          resetUI();
+          reconnect();
+          break;
+
+        case 'PEER_ANSWER_STATUS':
+          if (!isSpectator) {
+            renderPeerStatus(payload);
+          } else {
+            renderSpectatorPeerStatus(payload);
+          }
+          break;
+
+        case 'SPECTATOR_JOIN_SUCCESS':
+          handleSpectatorJoinSuccess(payload);
+          break;
+
+        case 'YOU_WERE_KICKED':
+          wasKicked = true;
+          document.getElementById('kicked-overlay').style.display = 'flex';
+          document.getElementById('kicked-overlay').classList.remove('d-none');
+          document.getElementById('play-section').classList.add('d-none');
+          document.getElementById('join-section').classList.add('d-none');
+          break;
+
+        case 'PLAYER_KICKED':
+          showNotification(`${payload.playerName} dikeluarkan dari sesi`);
+          break;
+
+        case 'SPECTATOR_JOINED':
+          showNotification('Spectator bergabung');
+          break;
+
+        case 'ERROR':
+          showNotification(`Error: ${payload.message}`);
+          if (payload.message && payload.message.includes('not found') && playerName && quizCode) {
+            resetUI();
+          }
+          break;
+      }
+    }
+
+    function handleQuizEvent(payload) {
+      const evtType = payload.type;
+
+      if (evtType === 'QUESTION_START') {
+        questionActive = true;
+        answered = false;
+        updateLeaveButtons();
+        currentQuestion = payload.question;
+
+        document.getElementById('waiting-screen').classList.add('d-none');
+        document.getElementById('ended-screen').classList.add('d-none');
+        document.getElementById('question-screen').classList.remove('d-none');
+        document.getElementById('feedback-area').classList.add('d-none');
+        document.getElementById('peer-status-panel').classList.remove('d-none');
+        document.getElementById('answered-list').innerHTML = '';
+        document.getElementById('pending-list').innerHTML = '';
+
+        const q = currentQuestion;
+        document.getElementById('question-number').textContent = `Soal ${q.question_number}/${q.total_questions}`;
+        document.getElementById('question-text').textContent = q.text;
+
+        enableAnswerButtons(q.options);
+      } else if (evtType === 'ANSWER_REVEAL') {
+        questionActive = false;
+        updateLeaveButtons();
+        const correct = payload.correct_answer;
+        document.querySelectorAll('.answer-btn').forEach(btn => {
+          btn.disabled = true;
+          if (btn.dataset.option === correct) {
+            btn.classList.add('correct');
+          }
+        });
+      }
+    }
+
+    function handleAnswerResult(payload) {
+      answered = true;
+      questionActive = false;
+      updateLeaveButtons();
+      totalScore = payload.total_score;
+
+      if (payload.correct) {
+        showFeedback('correct', 'Jawaban Benar!', `+${payload.score_gained} poin`);
+        document.querySelectorAll('.answer-btn.selected').forEach(btn => {
+          btn.classList.add('correct');
+        });
+      } else {
+        showFeedback('wrong', 'Jawaban Salah', `Total: ${payload.total_score} poin`);
+        document.querySelectorAll('.answer-btn.selected').forEach(btn => {
+          btn.classList.add('wrong');
+        });
+      }
+    }
+
+    function showFeedback(type, text, scoreText) {
+      const feedbackArea = document.getElementById('feedback-area');
+      const feedbackContent = document.getElementById('feedback-content');
+      const feedbackIcon = document.getElementById('feedback-icon');
+      const feedbackText = document.getElementById('feedback-text');
+      const feedbackScore = document.getElementById('feedback-score');
+
+      feedbackArea.classList.remove('d-none');
+      feedbackContent.className = `feedback-card ${type}`;
+      
+      if (type === 'correct') {
+        feedbackIcon.innerHTML = '<i class="fas fa-check" style="font-size: 3rem;"></i>';
+      } else if (type === 'wrong') {
+        feedbackIcon.innerHTML = '<i class="fas fa-xmark" style="font-size: 3rem;"></i>';
+      } else {
+        feedbackIcon.innerHTML = '<i class="fas fa-stopwatch" style="font-size: 3rem;"></i>';
+      }
+      
+      feedbackText.textContent = text;
+      feedbackScore.textContent = scoreText;
+    }
+
+    function handleQuizEnded(payload) {
+      questionActive = false;
+      updateLeaveButtons();
+      document.getElementById('timer-circle').textContent = '--';
+      document.getElementById('timer-circle').className = 'timer-circle idle';
+      document.getElementById('peer-status-panel').classList.add('d-none');
+      document.getElementById('question-screen').classList.add('d-none');
+      document.getElementById('waiting-screen').classList.add('d-none');
+      document.getElementById('ended-screen').classList.remove('d-none');
+
+      const leaderboard = payload.leaderboard || [];
+      const winner = payload.winner || '';
+
+      if (winner) {
+        document.getElementById('winner-display').innerHTML =
+          `<i class="fas fa-trophy"></i> Pemenang:<br><strong>${winner}</strong>`;
+      } else {
+        document.getElementById('winner-display').textContent = 'Quiz Berakhir!';
+      }
+
+      renderFinalLeaderboard(leaderboard);
+    }
+
+    function renderLeaderboard(entries) {
+      const container = document.getElementById('player-leaderboard');
+      container.innerHTML = '';
+      
+      entries.forEach(e => {
+        const row = document.createElement('div');
+        const isMe = (e.player_name === playerName);
+        let rankClass = 'other';
+        let rankDisplay = e.rank || 0;
+        
+        if (e.rank === 1) { rankClass = 'rank-1'; rankDisplay = '<i class="fas fa-crown"></i>'; }
+        else if (e.rank === 2) { rankClass = 'rank-2'; rankDisplay = '<i class="fas fa-medal"></i>'; }
+        else if (e.rank === 3) { rankClass = 'rank-3'; rankDisplay = '<i class="fas fa-medal"></i>'; }
+        
+        row.className = `leaderboard-row ${rankClass}`;
+        if (isMe) row.style.fontWeight = '800';
+        
+        row.innerHTML = `
+          <div>${rankDisplay}</div>
+          <div>${e.player_name}${isMe ? ' (kamu)' : ''}</div>
+          <div>${e.score}</div>
+        `;
+        container.appendChild(row);
+      });
+      
+      document.getElementById('my-score').textContent = `Skor: ${totalScore}`;
+    }
+
+    function renderFinalLeaderboard(leaderboard) {
+      const container = document.getElementById('final-leaderboard');
+      container.innerHTML = '';
+      
+      leaderboard.forEach((entry, i) => {
+        const row = document.createElement('div');
+        const isMe = (entry.player_name === playerName);
+        let rankClass = 'other';
+        let rankDisplay = entry.rank || i + 1;
+        
+        if (entry.rank === 1) { rankClass = 'rank-1'; rankDisplay = '<i class="fas fa-crown"></i>'; }
+        else if (entry.rank === 2) { rankClass = 'rank-2'; rankDisplay = '<i class="fas fa-medal"></i>'; }
+        else if (entry.rank === 3) { rankClass = 'rank-3'; rankDisplay = '<i class="fas fa-medal"></i>'; }
+        
+        row.className = `leaderboard-row ${rankClass}`;
+        if (isMe) row.style.fontWeight = '800';
+        
+        row.innerHTML = `
+          <div>${rankDisplay}</div>
+          <div>${entry.player_name}${isMe ? ' (kamu)' : ''}</div>
+          <div>${entry.score}</div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function renderPeerStatus(payload) {
+      const answeredEl = document.getElementById('answered-list');
+      const pendingEl = document.getElementById('pending-list');
+      
+      const answered = payload.answeredPlayers || [];
+      const pending = payload.pendingPlayers || [];
+
+      answeredEl.innerHTML = answered.map(name =>
+        `<div class="peer-item"><i class="fas fa-check" style="color: var(--accent-green); margin-right: 4px;"></i> ${name}</div>`
+      ).join('');
+
+      pendingEl.innerHTML = pending.map(name =>
+        `<div class="peer-item"><i class="fas fa-ellipsis" style="color: var(--text-secondary); margin-right: 4px;"></i> ${name}</div>`
+      ).join('');
+    }
+
+    function renderSpectatorPeerStatus(payload) {
+      renderPeerStatus(payload);
+    }
+
+    function handleSpectatorJoinSuccess(payload) {
+      isSpectator = true;
+      playerName = playerName || document.getElementById('player-name').value.trim();
+      quizCode = payload.quiz_code || quizCode;
+
+      document.getElementById('join-section').classList.add('d-none');
+      document.getElementById('play-section').classList.remove('d-none');
+      document.getElementById('spectator-badge-container').classList.remove('d-none');
+
+      document.querySelectorAll('.answer-btn').forEach(btn => {
+        btn.style.display = 'none';
+      });
+      document.getElementById('feedback-area').classList.add('d-none');
+
+      if (payload.leaderboard && payload.leaderboard.length > 0) {
+        renderLeaderboard(payload.leaderboard);
+      }
+
+      if (payload.quiz_status === 'ended') {
+        questionActive = false;
+        document.getElementById('waiting-screen').classList.add('d-none');
+        document.getElementById('question-screen').classList.add('d-none');
+        document.getElementById('ended-screen').classList.remove('d-none');
+      } else if (payload.quiz_status === 'active' && payload.current_question) {
+        currentQuestion = payload.current_question;
+        questionActive = true;
+        document.getElementById('waiting-screen').classList.add('d-none');
+        document.getElementById('ended-screen').classList.add('d-none');
+        document.getElementById('question-screen').classList.remove('d-none');
+        document.getElementById('peer-status-panel').classList.remove('d-none');
+
+        document.getElementById('question-number').textContent =
+          `Soal ${currentQuestion.question_number}/${currentQuestion.total_questions}`;
+        document.getElementById('question-text').textContent = currentQuestion.text;
+        document.querySelectorAll('.answer-btn').forEach(btn => btn.style.display = 'none');
+
+        if (payload.timer_remaining !== null && payload.timer_remaining !== undefined) {
+          updateTimerDisplay(payload.timer_remaining);
+        } else {
+          const circle = document.getElementById('timer-circle');
+          circle.className = 'timer-circle active';
+          circle.textContent = currentQuestion.time_limit || '--';
+        }
+      } else {
+        questionActive = false;
+        document.getElementById('waiting-screen').classList.remove('d-none');
+        document.getElementById('question-screen').classList.add('d-none');
+        document.getElementById('ended-screen').classList.add('d-none');
+      }
+      updateLeaveButtons();
+    }
+
+    function updateLeaveButtons() {
+      const show = !questionActive;
+      document.getElementById('btn-leave-waiting').classList.toggle('d-none', !show);
+      document.getElementById('btn-leave-question').classList.toggle('d-none', !show);
+      document.getElementById('btn-leave-ended').classList.toggle('d-none', !show);
+    }
+
+    function leaveRoom() {
+      if (questionActive) return;
+      intentionalClose = true;
+      send('LEAVE_QUIZ', {
+        player_name: playerName,
+        quiz_code: quizCode
+      });
+    }
+
+    function resetUI() {
+      playerId = null;
+      sessionId = null;
+      currentQuestion = null;
+      answered = false;
+      totalScore = 0;
+      questionActive = false;
+      playerName = '';
+      quizCode = '';
+      isSpectator = false;
+      wasKicked = false;
+      intentionalClose = false;
+
+      document.getElementById('join-section').classList.remove('d-none');
+      document.getElementById('play-section').classList.add('d-none');
+      document.getElementById('waiting-screen').classList.remove('d-none');
+      document.getElementById('question-screen').classList.add('d-none');
+      document.getElementById('ended-screen').classList.add('d-none');
+      document.getElementById('player-name').value = '';
+      document.getElementById('quiz-code').value = '';
+      document.getElementById('player-leaderboard').innerHTML = '';
+      document.getElementById('my-score').textContent = '';
+      document.getElementById('server-alert').classList.add('d-none');
+      document.getElementById('timer-circle').textContent = '--';
+      document.getElementById('timer-circle').className = 'timer-circle idle';
+      document.getElementById('question-number').textContent = 'Soal -/--';
+      document.getElementById('question-text').textContent = 'Memuat soal...';
+      document.getElementById('feedback-area').classList.add('d-none');
+      document.getElementById('peer-status-panel').classList.add('d-none');
+      document.getElementById('spectator-badge-container').classList.add('d-none');
+      document.querySelectorAll('.answer-btn').forEach(btn => {
+        btn.querySelector('.answer-text').textContent = '---';
+        btn.disabled = true;
+        btn.style.display = 'flex';
+        btn.classList.remove('correct', 'wrong', 'selected');
+      });
+      updateLeaveButtons();
+    }
+
+    // Event Listeners
+    document.querySelectorAll('.answer-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (answered || !currentQuestion) return;
+        answered = true;
+        questionActive = false;
+        updateLeaveButtons();
+        disableAnswerButtons();
+        btn.classList.add('selected');
+
+        send('SUBMIT_ANSWER', {
+          player_id: playerId,
+          session_id: sessionId,
+          question_id: currentQuestion.question_id,
+          answer: btn.dataset.option,
+          submitted_at: Date.now()
+        });
+      });
+    });
+
+    document.getElementById('btn-join').addEventListener('click', () => {
+      playerName = document.getElementById('player-name').value.trim();
+      quizCode = document.getElementById('quiz-code').value.trim().toUpperCase();
+      if (!playerName || !quizCode) {
+        alert('Masukkan nama dan kode quiz');
+        return;
+      }
+      isSpectator = false;
+      send('JOIN_QUIZ', { player_name: playerName, quiz_code: quizCode });
+    });
+
+    document.getElementById('btn-spectate').addEventListener('click', () => {
+      const name = document.getElementById('player-name').value.trim() || 'Spectator';
+      quizCode = document.getElementById('quiz-code').value.trim().toUpperCase();
+      if (!quizCode) {
+        alert('Masukkan kode quiz');
+        return;
+      }
+      playerName = name;
+      isSpectator = true;
+      send('JOIN_AS_SPECTATOR', { name: name, quiz_code: quizCode });
+    });
+
+    document.getElementById('btn-back-home').addEventListener('click', () => {
+      document.getElementById('kicked-overlay').style.display = 'none';
+      resetUI();
+    });
+
+    document.getElementById('btn-leave-waiting').addEventListener('click', leaveRoom);
+    document.getElementById('btn-leave-question').addEventListener('click', leaveRoom);
+    document.getElementById('btn-leave-ended').addEventListener('click', leaveRoom);
+
+    document.getElementById('btn-try-again').addEventListener('click', () => {
+      reconnectAttempts = 0;
+      document.getElementById('btn-try-again').classList.add('d-none');
+      attemptReconnect();
+    });
+
+    connect();
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package admin;
+
+service AdminService {
+  rpc UploadQuestions (stream QuestionUpload) returns (UploadSummary);
+  rpc StartQuiz (SessionRequest) returns (ActionResponse);
+  rpc NextQuestion (SessionRequest) returns (ActionResponse);
+  rpc EndQuiz (SessionRequest) returns (ActionResponse);
+}
+
+message QuestionUpload {
+  string session_id = 1;
+  string host_id = 2;
+  string question_text = 3;
+  repeated string options = 4;
+  string correct_answer = 5;
+  int32 time_limit = 6;
+}
+
+message UploadSummary {
+  int32 total_uploaded = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message SessionRequest {
+  string session_id = 1;
+  string host_id = 2;
+}
+
+message ActionResponse {
+  bool success = 1;
+  string message = 2;
+}

@@ -1,0 +1,19 @@
+{
+  "name": "grpc-quiz-system",
+  "version": "1.0.0",
+  "description": "Real-Time Quiz System using gRPC",
+  "main": "server/server.js",
+  "scripts": {
+    "server": "node server/server.js",
+    "gateway": "node ws-gateway/gateway.js",
+    "master": "node client/master_client.js",
+    "player": "node client/player_client.js"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.10.0",
+    "@grpc/proto-loader": "^0.7.0",
+    "express": "^4.18.0",
+    "uuid": "^9.0.0",
+    "ws": "^8.16.0"
+  }
+}

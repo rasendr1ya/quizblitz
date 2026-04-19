@@ -583,6 +583,41 @@
       flex: 1;
     }
 
+    /* Dropdown Card */
+    .card-dropdown .card-header {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-dropdown .card-header:hover {
+      background: var(--surface-2);
+    }
+
+    .dropdown-toggle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      transition: transform 0.2s ease;
+    }
+
+    .card-dropdown.collapsed .dropdown-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .card-dropdown .card-body {
+      max-height: 500px;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .card-dropdown.collapsed .card-body {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
     /* Result Section */
     .winner-banner {
       text-align: center;
@@ -753,8 +788,11 @@
           </div>
 
           <!-- Activity Log -->
-          <div class="card">
-            <div class="card-header"><i class="fas fa-clipboard-list"></i> Aktivitas</div>
+          <div class="card card-dropdown" id="activity-card">
+            <div class="card-header" onclick="toggleActivityLog()">
+              <span><i class="fas fa-clipboard-list"></i> Aktivitas</span>
+              <i class="fas fa-chevron-down dropdown-toggle"></i>
+            </div>
             <div class="card-body" style="padding: 16px;">
               <div id="activity-log" class="activity-log"></div>
             </div>
@@ -1181,6 +1219,12 @@
         badge.className = 'status-badge ended';
         badge.textContent = 'Selesai';
       }
+    }
+
+    // Toggle Activity Log dropdown
+    function toggleActivityLog() {
+      const card = document.getElementById('activity-card');
+      card.classList.toggle('collapsed');
     }
 
     // Event listeners

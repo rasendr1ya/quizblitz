@@ -4,13 +4,110 @@ Sistem kuis real-time berbasis **gRPC** (backend) dan **WebSocket** (frontend br
 
 ## Arsitektur
 
+### Layer Overview
+
 ```
-Browser (host.html / player.html)
-        ↕  WebSocket (JSON)        Port 3000
-WebSocket Gateway (ws-gateway/gateway.js)
-        ↕  gRPC client calls       Port 50051
-gRPC Server (server/server.js)
+┌─────────────────────────────────────────────────────────────────┐
+│                        BROWSER (Port 3000)                      │
+│  ┌──────────────────────┐    ┌──────────────────────────────┐  │
+│  │     host.html        │    │        player.html           │  │
+│  │  ┌────────────────┐  │    │  ┌────────────────┐         │  │
+│  │  │ Host Dashboard │  │    │  │  Player Panel  │         │  │
+│  │  │ • Control Bar  │  │    │  │  • Answer Btns  │         │  │
+│  │  │ • Leaderboard  │  │    │  │  • Timer        │         │  │
+│  │  │ • Player List  │  │    │  │  • Leaderboard  │         │  │
+│  │  │ • Upload Soal  │  │    │  │  • Peer Status  │         │  │
+│  │  │ • Activity Log │  │    │  │                │         │  │
+│  │  └────────────────┘  │    │  └────────────────┘         │  │
+│  └──────────┬───────────┘    └──────────┬───────────────────┘  │
+└─────────────┼───────────────────────────┼───────────────────────┘
+              │  WebSocket (JSON)          │  WebSocket (JSON)
+              │  Port 3000                 │  Port 3000
+┌─────────────┼───────────────────────────┼───────────────────────┐
+│             ▼                           ▼                        │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │              WebSocket Gateway (gateway.js)                  ││
+│  │                                                             ││
+│  │  ┌─────────────────┐  ┌──────────────┐  ┌──────────────┐  ││
+│  │  │ Session Manager │  │ Timer Engine │  │ Spectator     │  ││
+│  │  │ (clients, meta, │  │ (per-question│  │ Tracking      │  ││
+│  │  │  players, specs)│  │  countdown)  │  │ (filter from  │  ││
+│  │  └─────────────────┘  └──────────────┘  │  leaderboard)  │  ││
+│  │                                         └──────────────┘  ││
+│  │  ┌─────────────────┐  ┌──────────────┐  ┌──────────────┐  ││
+│  │  │ Command Router  │  │ Leaderboard  │  │ Answer Stats  │  ││
+│  │  │ (WS msg type    │  │ Enricher     │  │ (correct/     │  ││
+│  │  │  → gRPC call)   │  │ (merge gRPC  │  │  wrong/missed)│  ││
+│  │  └─────────────────┘  │  + gateway)   │  └──────────────┘  ││
+│  │                        └──────────────┘                     ││
+│  └──────────────────────────┬──────────────────────────────────┘│
+│                             │ gRPC (HTTP/2)                     │
+│                             │ Port 50051                         │
+└─────────────────────────────┼───────────────────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     gRPC Server (server.js)                     │
+│                                                                  │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌────────────────┐  │
+│  │  QuizService     │  │  StreamService   │  │  AdminService   │  │
+│  │                  │  │                  │  │                  │  │
+│  │  • CreateQuiz    │  │  • WatchQuiz     │  │  • UploadQs     │  │
+│  │  • JoinQuiz      │  │    Events (srv   │  │    (client-str)  │  │
+│  │  • SubmitAnswer  │  │    stream)       │  │  • StartQuiz    │  │
+│  │  • GetQuizResult │  │  • Watch         │  │  • NextQuestion │  │
+│  │                  │  │    Leaderboard   │  │  • EndQuiz      │  │
+│  │                  │  │    (srv stream)  │  │                  │  │
+│  └────────┬────────┘  └────────┬────────┘  └────────┬───────┘  │
+│           │                    │                      │           │
+│           ▼                    ▼                      ▼           │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │              In-Memory State (store.js)                     ││
+│  │  • sessions  • players   • questions  • scores              ││
+│  │  • EventEmitters per session for stream notifications      ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     CLI Clients (optional)                       │
+│  ┌──────────────────────┐    ┌──────────────────────────────┐  │
+│  │  master_client.js    │    │    player_client.js           │  │
+│  │  (readline-based)    │    │    (readline-based)           │  │
+│  └──────────┬───────────┘    └──────────┬───────────────────┘  │
+│             │  gRPC (Port 50051)          │  gRPC (Port 50051)  │
+└─────────────┼─────────────────────────────┼─────────────────────┘
 ```
+
+### Request-Response Flow
+
+**Player Joins:**
+```
+player.html ──JOIN_QUIZ──▶ gateway.js ──QuizService.JoinQuiz()──▶ gRPC server
+                                                                 │
+player.html ◀──JOIN_SUCCESS── gateway.js ◀──player_id, session───┘
+peer clients ◀──PLAYER_JOINED (broadcast) ◀──gateway.js ◀──event stream──┘
+```
+
+**Player Answers:**
+```
+player.html ──SUBMIT_ANSWER──▶ gateway.js ──QuizService.SubmitAnswer()──▶ gRPC server
+                                                                          │
+player.html ◀──ANSWER_RESULT── gateway.js ◀──correct, score──────────────┘
+host.html   ◀──ANSWER_STATS── gateway.js (enriched locally)
+all clients ◀──LEADERBOARD_UPDATE── gateway.js ◀──stream update──────────┘
+all clients ◀──PEER_ANSWER_STATUS── gateway.js
+```
+
+**Host Controls:**
+```
+host.html ──UPLOAD_QUESTIONS──▶ gateway.js ──AdminService.UploadQuestions()──▶ gRPC server
+host.html ──CONTROL_QUIZ──────▶ gateway.js ──AdminService.StartQuiz/Next/End──▶ gRPC server
+                                                                                │
+all clients ◀──QUIZ_EVENT (QUESTION_START/ANSWER_REVEAL/QUIZ_END) ◀──event stream──┘
+all clients ◀──LEADERBOARD_UPDATE ◀──leaderboard stream──┘
+all clients ◀──TIMER_TICK ◀──gateway timer engine──┘
+```
+
+### Technology Stack
 
 | Layer | Teknologi | Port | File |
 |---|---|---|---|
